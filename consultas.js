@@ -14,5 +14,5 @@ export const obtenerPost = async () => {
   return rows; 
 };
 
-//query a bd
+//aqui las consultas
 
