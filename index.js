@@ -9,5 +9,4 @@ app.use(express.json());
 app.use(cors());
 
 //llamados a apis
-
 app.listen(port, () => console.log(`Servidor escuchando en puerto ${port}`));

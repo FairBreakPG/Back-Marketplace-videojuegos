@@ -15,3 +15,4 @@ export const obtenerPost = async () => {
 };
 
 //query a bd
+
