@@ -88,7 +88,7 @@ INSERT INTO productos (nombre, descripcion, precio, descuento, stock, juegos_id,
 (nombre, descripcion, precio, descuento, stock, juegos_id, imagen);
 
 -- USUARIOS
-INSERT INTO usuarios (nombre, apellido, email, contrasena, direccion, telefono, rol) VALUES
+INSERT INTO usuarios (nombre, apellido, email, contraseña, direccion, telefono, rol) VALUES
 (nombre, apellido, email, contrasena, direccion, telefono, rol);
 
 -- PEDIDOS
