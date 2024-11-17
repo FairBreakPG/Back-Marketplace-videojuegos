@@ -16,3 +16,13 @@ export const obtenerPost = async () => {
 
 //aqui las consultas
 
+const conexionTest = async () => {
+  try {
+    await pool.query('SELECT NOW()');
+    console.log('Conectado a la base de datos desde config');
+  } catch (error) {
+    console.log('Error en la conexion a la base de datos desde config', error.message);
+  }
+};
+
+conexionTest();
