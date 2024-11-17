@@ -1,18 +1,23 @@
 import pg from 'pg';
+import 'dotenv/config';
+
 const { Pool } = pg;
+const { DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_DATABASE, JWT_SECRET } = process.env;
 
 const pool = new Pool({
-  host: 'localhost',
-  user: 'postgres',
-  password: '1234',
-  database: 'likeme',
-  port: 5432,
+  host: 'DB_HOST',
+  user: 'DB_USER',
+  password: 'DB_PASSWORD',
+  database: 'DB_DATABASE',
+  port: 'DB_PORT',
 });
 
 export const obtenerPost = async () => {
   const { rows } = await pool.query("SELECT * FROM posts;");
   return rows; 
 };
+
+export const JWT_SECRETA = JWT_SECRET;
 
 //aqui las consultas
 
