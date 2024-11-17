@@ -97,7 +97,7 @@ INSERT INTO pedidos (usuario_id, total, metodo_pago) VALUES
 (2, 108000, 'PayPal');
 
 -- DETALLES PEDIDOS
-INSERT INTO detalles_pedido (pedido_id, producto_id, cantidad, precio_unitario) VALUES
+INSERT INTO detalles_pedido (pedido_id, producto_id, cantidad, precio) VALUES
 (pedido_id, producto_id, cantidad, precio_unitario);
 
 --- script carrito
