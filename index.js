@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import jwt from 'jsonwebtoken'; 
-import { obtenerUsuarios, obtenerPerfilUsuario, obtenerCarro, quitarItemCarro, obtenerOrdenes, obtenerOrdenesHistorial, login, crearOrden, actualizarOrden, eliminarOrden, registrarUsuario } from './consultas.js'; // Importamos todas las funciones necesarias
+import { obtenerUsuarios, obtenerPerfilUsuario, obtenerCarro, quitarItemCarro, obtenerOrdenes, obtenerOrdenesHistorial, login, crearOrden, actualizarOrden, eliminarOrden, registrarUsuario, obtenerProductos, crearProducto } from './consultas.js';
 import { authenticateToken } from './middleware.js'; 
 const app = express();
 const port = 3000;
@@ -152,4 +152,29 @@ app.delete('/ordenes/:id', authenticateToken, async (req, res) => {
 // Iniciar el servidor
 app.listen(port, () => {
   console.log(`Servidor corriendo en el puerto ${port}`);
+});
+
+
+// Obtener todos los productos
+app.get('/productos', async (req, res) => {
+  try {
+    const productos = await obtenerProductos();
+    res.json(productos);
+  } catch (error) {
+    console.error('Error al obtener productos:', error);
+    res.status(500).json({ message: 'Error en el servidor' });
+  }
+});
+
+// Crear un nuevo producto
+app.post('/productos', authenticateToken, async (req, res) => {
+  const { nombre, descripcion, precio, descuento, stock, juegosId, imagen } = req.body;
+
+  try {
+    const nuevoProductoId = await crearProducto(nombre, descripcion, precio, descuento, stock, juegosId, imagen);
+    res.status(201).json({ id: nuevoProductoId, message: 'Producto creado exitosamente' });
+  } catch (error) {
+    console.error('Error al crear el producto:', error);
+    res.status(500).json({ message: 'Error al crear el producto' });
+  }
 });

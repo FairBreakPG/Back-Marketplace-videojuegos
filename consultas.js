@@ -1,6 +1,7 @@
 import pg from 'pg';
 import bcrypt from 'bcryptjs';  
 import 'dotenv/config';
+import logger from './loggers.js';
 
 
 const { Pool } = pg;
@@ -125,4 +126,35 @@ export const eliminarOrden = async (orderId) => {
   const query = 'DELETE FROM pedidos WHERE id = $1 RETURNING *';
   const result = await pool.query(query, [orderId]);
   return result.rows[0];
+};
+
+// Obtener todos los productos
+export const obtenerProductos = async () => {
+  const query = `
+    SELECT p.id, p.nombre, p.descripcion, p.precio, p.descuento, p.stock, p.imagen, p.fecha_creacion, p.fecha_modificacion, j.nombre AS juego
+    FROM productos p
+    LEFT JOIN juegos j ON p.juegos_id = j.id
+  `;
+
+  logger.info('Obteniendo lista de productos disponibles');
+  
+  try {
+    const result = await pool.query(query);
+    logger.info('Productos obtenidos exitosamente');
+    return result.rows;
+  } catch (error) {
+    logger.error(`Error al obtener productos: ${error.message}`);
+    throw error;
+  }
+};
+
+
+// Crear un nuevo producto
+export const crearProducto = async (nombre, descripcion, precio, descuento, stock, juegosId, imagen) => {
+  const query = `
+    INSERT INTO productos (nombre, descripcion, precio, descuento, stock, juegos_id, imagen)
+    VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id
+  `;
+  const result = await pool.query(query, [nombre, descripcion, precio, descuento, stock, juegosId, imagen]);
+  return result.rows[0].id;
 };
