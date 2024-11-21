@@ -6,7 +6,7 @@ CREATE TABLE usuarios (
   nombre            VARCHAR(100)    NOT NULL,
   apellido          VARCHAR(100)    NOT NULL,
   email             VARCHAR(255)    UNIQUE NOT NULL,
-  contraseña        VARCHAR(255)    NOT NULL,
+  contrasena        VARCHAR(255)    NOT NULL,
   direccion         VARCHAR(255),
   telefono          VARCHAR(20),
   fecha_registro    TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -88,7 +88,7 @@ INSERT INTO productos (nombre, descripcion, precio, descuento, stock, juegos_id,
 (nombre, descripcion, precio, descuento, stock, juegos_id, imagen);
 
 -- USUARIOS
-INSERT INTO usuarios (nombre, apellido, email, contraseña, direccion, telefono, rol) VALUES
+INSERT INTO usuarios (nombre, apellido, email, contrasena, direccion, telefono, rol) VALUES
 (nombre, apellido, email, contrasena, direccion, telefono, rol);
 
 -- PEDIDOS
