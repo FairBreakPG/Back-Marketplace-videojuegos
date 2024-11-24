@@ -36,6 +36,13 @@ export const login = async (email, contraseña) => {
 };
 
 export const registrarUsuario = async (nombre, apellido, email, contraseña, telefono, direccion, rol) => {
+  logger.info(`Registrando usuario: nombre=${nombre}, apellido=${apellido}, email=${email}, telefono=${telefono}, direccion=${direccion}, rol=${rol}`);
+
+  if (!nombre || !apellido || !email || !contraseña || !telefono || !direccion || !rol) {
+    logger.error('Faltan datos requeridos para registrar al usuario');
+    throw new Error('Faltan datos para registrar al usuario');
+  }
+
   const hashedPassword = await bcrypt.hash(contraseña, 10); 
 
   const query = `
@@ -43,8 +50,13 @@ export const registrarUsuario = async (nombre, apellido, email, contraseña, tel
     VALUES ($1, $2, $3, $4, $5, $6, $7, '1') RETURNING id
   `;
   
-  const result = await pool.query(query, [nombre, apellido, email, hashedPassword, telefono, direccion, rol]);
-  return result.rows[0].id;  
+  try {
+    const result = await pool.query(query, [nombre, apellido, email, hashedPassword, telefono, direccion, rol]);
+    return result.rows[0].id;  
+  } catch (error) {
+    logger.error(`Error en la consulta SQL: ${error.message}`);
+    throw error;  // Propagar el error hacia el controlador
+  }
 };
 
 export const obtenerUsuarios = async () => {
@@ -61,19 +73,45 @@ export const obtenerPerfilUsuario = async (id) => {
 
 export const obtenerCarro = async (userId) => {
   const query = `
-    SELECT c.id, p.nombre AS producto, p.precio, p.imagen, c.cantidad 
+    SELECT c.id, c.cantidad, p.nombre AS name, p.precio AS price, p.imagen AS img 
     FROM carrito c
     JOIN productos p ON c.producto_id = p.id
     WHERE c.usuario_id = $1
   `;
-  const result = await pool.query(query, [userId]);
-  return result.rows;
+  const { rows } = await pool.query(query, [userId]);
+  const total = rows.reduce((sum, item) => sum + item.price * item.cantidad, 0);
+  return { items: rows, total };
 };
 
-export const quitarItemCarro = async (userId, productoId) => {
-  const query = 'DELETE FROM carrito WHERE usuario_id = $1 AND producto_id = $2 RETURNING *';
-  const result = await pool.query(query, [userId, productoId]);
-  return result.rows[0];
+export const agregarProductoCarro = async (userId, productoId, cantidad) => {
+  logger.info(`Intentando agregar producto al carrito: usuario_id=${userId}, producto_id=${productoId}, cantidad=${cantidad}`);
+
+  const query = `
+    INSERT INTO carrito (usuario_id, producto_id, cantidad)
+    VALUES ($1, $2, $3)
+    ON CONFLICT (usuario_id, producto_id) 
+    DO UPDATE SET cantidad = carrito.cantidad + EXCLUDED.cantidad
+    RETURNING *;
+  `;
+
+  try {
+    const { rows } = await pool.query(query, [userId, productoId, cantidad]);
+    logger.info(`Producto agregado al carrito exitosamente: ${JSON.stringify(rows[0])}`);
+    return rows[0];
+  } catch (error) {
+    logger.error(`Error al agregar producto al carrito: ${error.message}`);
+    throw new Error(error.message || "Error al agregar producto al carrito");
+  }
+};
+
+export const eliminarProductoCarro = async (userId, productoId) => {
+  const query = `
+    DELETE FROM carrito 
+    WHERE usuario_id = $1 AND producto_id = $2
+    RETURNING id
+  `;
+  const { rows } = await pool.query(query, [userId, productoId]);
+  return rows[0];
 };
 
 export const obtenerOrdenes = async () => {
@@ -121,14 +159,12 @@ export const actualizarOrden = async (orderId, estado) => {
   return result.rows[0];
 };
 
-// Eliminar una orden
 export const eliminarOrden = async (orderId) => {
   const query = 'DELETE FROM pedidos WHERE id = $1 RETURNING *';
   const result = await pool.query(query, [orderId]);
   return result.rows[0];
 };
 
-// Obtener todos los productos
 export const obtenerProductos = async () => {
   const query = `
     SELECT p.id, p.nombre, p.descripcion, p.precio, p.descuento, p.stock, p.imagen, p.fecha_creacion, p.fecha_modificacion, j.nombre AS juego
@@ -148,8 +184,6 @@ export const obtenerProductos = async () => {
   }
 };
 
-
-// Crear un nuevo producto
 export const crearProducto = async (nombre, descripcion, precio, descuento, stock, juegosId, imagen) => {
   const query = `
     INSERT INTO productos (nombre, descripcion, precio, descuento, stock, juegos_id, imagen)
