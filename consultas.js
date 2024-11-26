@@ -87,11 +87,11 @@ export const agregarProductoCarro = async (userId, productoId, cantidad) => {
   logger.info(`Intentando agregar producto al carrito: usuario_id=${userId}, producto_id=${productoId}, cantidad=${cantidad}`);
 
   const query = `
-    INSERT INTO carrito (usuario_id, producto_id, cantidad)
-    VALUES ($1, $2, $3)
-    ON CONFLICT (usuario_id, producto_id) 
-    DO UPDATE SET cantidad = carrito.cantidad + EXCLUDED.cantidad
-    RETURNING *;
+  INSERT INTO carrito (usuario_id, producto_id, cantidad)
+  VALUES ($1, $2, $3)
+  ON CONFLICT (usuario_id, producto_id) 
+  DO UPDATE SET cantidad = carrito.cantidad + EXCLUDED.cantidad
+  RETURNING *;
   `;
 
   try {
@@ -105,14 +105,32 @@ export const agregarProductoCarro = async (userId, productoId, cantidad) => {
 };
 
 export const eliminarProductoCarro = async (userId, productoId) => {
-  const query = `
+  const checkQuery = `
+    SELECT * FROM carrito 
+    WHERE usuario_id = $1 AND producto_id = $2
+  `;
+  const { rows } = await pool.query(checkQuery, [userId, productoId]);
+
+  if (rows.length === 0) {
+    throw new Error('No se encontró el producto en el carrito o ya fue eliminado.');
+  }
+
+  const deleteQuery = `
     DELETE FROM carrito 
     WHERE usuario_id = $1 AND producto_id = $2
     RETURNING id
   `;
-  const { rows } = await pool.query(query, [userId, productoId]);
-  return rows[0];
+  const deleteResult = await pool.query(deleteQuery, [userId, productoId]);
+
+  if (!deleteResult.rows[0]) {
+    throw new Error('Error al eliminar el producto del carrito.');
+  }
+
+  return deleteResult.rows[0];
 };
+
+
+
 
 export const obtenerOrdenes = async () => {
   const query = `
@@ -191,4 +209,66 @@ export const crearProducto = async (nombre, descripcion, precio, descuento, stoc
   `;
   const result = await pool.query(query, [nombre, descripcion, precio, descuento, stock, juegosId, imagen]);
   return result.rows[0].id;
+};
+
+export const obtenerPerfilUsuarioConPedidos = async (id) => {
+  const queryPerfil = `
+    SELECT id, nombre, apellido, email, telefono, direccion, rol 
+    FROM usuarios 
+    WHERE id = $1 AND estado = '1'
+  `;
+  
+  const queryPedidos = `
+    SELECT p.id AS pedido_id, p.fecha, p.total, p.estado, p.metodo_pago, 
+           dp.producto_id, dp.cantidad, dp.precio
+    FROM pedidos p
+    LEFT JOIN detalles_pedido dp ON dp.pedido_id = p.id
+    WHERE p.usuario_id = $1
+  `;
+  
+  const client = await pool.connect();
+  try {
+    const perfilResult = await client.query(queryPerfil, [id]);
+    const perfil = perfilResult.rows[0];
+
+    if (!perfil) {
+      return null;
+    }
+
+    let pedidos = [];
+    if (perfil.rol === 'cliente') {
+      const pedidosResult = await client.query(queryPedidos, [id]);
+      pedidos = pedidosResult.rows;
+    }
+
+    return { perfil, pedidos };
+  } finally {
+    client.release();
+  }
+};
+
+
+
+
+
+
+
+// Obtener productos del carrito
+export const obtenerCarritoPorUsuario = async (usuarioId) => {
+  const query = `
+    SELECT producto_id, cantidad 
+    FROM carrito 
+    WHERE usuario_id = $1
+  `;
+  const result = await pool.query(query, [usuarioId]);
+  return result.rows;
+};
+
+// Limpiar el carrito
+export const limpiarCarrito = async (usuarioId) => {
+  const query = `
+    DELETE FROM carrito 
+    WHERE usuario_id = $1
+  `;
+  await pool.query(query, [usuarioId]);
 };

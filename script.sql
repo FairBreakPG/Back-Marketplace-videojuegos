@@ -72,37 +72,3 @@ CREATE TABLE carrito (
   cantidad          INT NOT NULL DEFAULT 1,
   fecha_agregado    TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
-
-
--- INSERT TABLAS PRUEBAS
-
-
--- JUEGOS
-INSERT INTO juegos (nombre, descripcion) VALUES
-(nombre, descripcion);
-
-
--- PRODUCTOS
-INSERT INTO productos (nombre, descripcion, precio, descuento, stock, juegos_id, imagen) VALUES
-(nombre, descripcion, precio, descuento, stock, juegos_id, imagen);
-
--- USUARIOS
-INSERT INTO usuarios (nombre, apellido, email, contrasena, direccion, telefono, rol) VALUES
-(nombre, apellido, email, contrasena, direccion, telefono, rol);
-
--- PEDIDOS
-INSERT INTO pedidos (usuario_id, total, metodo_pago) VALUES
-(1, 42000, 'Tarjeta'),
-(2, 108000, 'PayPal');
-
--- DETALLES PEDIDOS
-INSERT INTO detalles_pedido (pedido_id, producto_id, cantidad, precio) VALUES
-(pedido_id, producto_id, cantidad, precio_unitario);
-
---- script carrito
-INSERT INTO carrito (usuario_id, producto_id, cantidad)
-VALUES (2, 3, 2); -- Usuario con id 1 agrega 1 unidad del producto con id 2 al carrito
-INSERT INTO carrito (usuario_id, producto_id, cantidad)
-VALUES (1, 2, 1); -- Usuario con id 1 agrega 1 unidad del producto con id 2 al carrito
----

@@ -2,7 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import jwt from 'jsonwebtoken'; 
 import { obtenerUsuarios, obtenerPerfilUsuario, obtenerOrdenes, obtenerOrdenesHistorial, login, crearOrden, actualizarOrden, eliminarOrden, registrarUsuario, obtenerProductos, crearProducto,
-  obtenerCarro, agregarProductoCarro, eliminarProductoCarro} from './consultas.js';
+  obtenerCarro, agregarProductoCarro, eliminarProductoCarro,obtenerPerfilUsuarioConPedidos,
+  obtenerCarritoPorUsuario,limpiarCarrito} from './consultas.js';
 import { authenticateToken } from './middleware.js'; 
 import logger from './loggers.js'; // Importa el logger que configuraste
 
@@ -97,56 +98,31 @@ app.get('/carro/:userId', authenticateToken, async (req, res) => {
   }
 });
 
-// Agregar producto al carrito
-export const agregarAlCarro = async (productoId, cantidad, userId, token) => {
+app.post('/carro', authenticateToken, async (req, res) => {
+  const { productoId, cantidad } = req.body;
+  const userId = req.user.id; 
+  
   try {
-    logger.info(`[agregarAlCarro] Datos recibidos: productoId=${productoId}, cantidad=${cantidad}, userId=${userId}, token=${token ? 'Token Presente' : 'Token No Disponible'}`);
-
-    // Verificar que se haya pasado el token y el userId
-    if (!token || !userId) {
-      logger.error('[agregarAlCarro] Error: Token o userId no encontrados. El usuario no está autenticado.');
-      throw new Error('Token o userId no encontrados. El usuario no está autenticado.');
-    }
-
-    // Hacer la solicitud al backend
-    const response = await axios.post(ENDPOINT.carro, 
-      { productoId, cantidad, userId },
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-    logger.info(`[agregarAlCarro] Respuesta del backend: ${JSON.stringify(response.data)}`);
-    return response.data;
-
+    const carro = await agregarProductoCarro(userId, productoId, cantidad);
+    res.json(carro);
   } catch (error) {
-    if (error.response) {
-      logger.error(`[agregarAlCarro] Error en la respuesta del backend: ${error.response.data}`);
-      logger.error(`[agregarAlCarro] Status del error: ${error.response.status}`);
-    } else {
-      logger.error(`[agregarAlCarro] Error en la solicitud: ${error.message}`);
-    }
-    
-    throw new Error(error.response?.data?.message || "Error al agregar producto al carrito");
+    res.status(500).json({ message: 'Error al agregar producto al carrito' });
   }
-};
+});
 
 
-// Eliminar producto del carrito
 app.delete('/carro/:productoId', authenticateToken, async (req, res) => {
-  const userId = req.user.id;  
+  const userId = req.user.id;
   const { productoId } = req.params;
 
-  // Log para registrar el intento de eliminar un producto del carrito
   logger.info(`Usuario con ID ${userId} intenta eliminar del carrito el producto con ID ${productoId}.`);
 
   try {
     const carro = await eliminarProductoCarro(userId, productoId);
-    logger.info(`Producto con ID ${productoId} eliminado exitosamente del carrito del usuario con ID ${userId}.`);  // Log cuando el producto es eliminado
+    logger.info(`Producto con ID ${productoId} eliminado exitosamente del carrito del usuario con ID ${userId}.`);
     res.json(carro);
   } catch (error) {
-    logger.error(`Error al eliminar el producto con ID ${productoId} del carrito del usuario con ID ${userId}: ${error.message}`);  // Log de error
+    logger.error(`Error al eliminar el producto con ID ${productoId} del carrito del usuario con ID ${userId}: ${error.message}`);
     res.status(500).json({ message: 'Error en el servidor' });
   }
 });
@@ -265,3 +241,36 @@ app.post('/refresh-token', async (req, res) => {
     return res.status(403).json({ message: 'Refresh token inválido' });
   }
 });
+
+app.get('/usuario/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const data = await obtenerPerfilUsuarioConPedidos(id);
+    if (!data) {
+      return res.status(404).json({ message: 'Usuario no encontrado o inactivo' });
+    }
+    res.json(data);
+  } catch (error) {
+    console.error('Error al obtener datos del usuario:', error);
+    res.status(500).json({ message: 'Error en el servidor' });
+  }
+});
+
+const obtenerCarritoPorUsuario = async (usuarioId) => {
+  const query = `
+    SELECT producto_id, cantidad 
+    FROM carrito 
+    WHERE usuario_id = $1
+  `;
+  const result = await pool.query(query, [usuarioId]);
+  return result.rows;
+};
+
+const limpiarCarrito = async (usuarioId) => {
+  const query = `
+    DELETE FROM carrito 
+    WHERE usuario_id = $1
+  `;
+  await pool.query(query, [usuarioId]);
+};
