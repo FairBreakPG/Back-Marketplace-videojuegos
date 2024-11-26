@@ -250,25 +250,3 @@ export const obtenerPerfilUsuarioConPedidos = async (id) => {
 
 
 
-
-
-
-// Obtener productos del carrito
-export const obtenerCarritoPorUsuario = async (usuarioId) => {
-  const query = `
-    SELECT producto_id, cantidad 
-    FROM carrito 
-    WHERE usuario_id = $1
-  `;
-  const result = await pool.query(query, [usuarioId]);
-  return result.rows;
-};
-
-// Limpiar el carrito
-export const limpiarCarrito = async (usuarioId) => {
-  const query = `
-    DELETE FROM carrito 
-    WHERE usuario_id = $1
-  `;
-  await pool.query(query, [usuarioId]);
-};

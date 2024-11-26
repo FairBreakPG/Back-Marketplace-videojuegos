@@ -2,8 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import jwt from 'jsonwebtoken'; 
 import { obtenerUsuarios, obtenerPerfilUsuario, obtenerOrdenes, obtenerOrdenesHistorial, login, crearOrden, actualizarOrden, eliminarOrden, registrarUsuario, obtenerProductos, crearProducto,
-  obtenerCarro, agregarProductoCarro, eliminarProductoCarro,obtenerPerfilUsuarioConPedidos,
-  obtenerCarritoPorUsuario,limpiarCarrito} from './consultas.js';
+  obtenerCarro, agregarProductoCarro, eliminarProductoCarro,obtenerPerfilUsuarioConPedidos} from './consultas.js';
 import { authenticateToken } from './middleware.js'; 
 import logger from './loggers.js'; // Importa el logger que configuraste
 
@@ -257,20 +256,3 @@ app.get('/usuario/:id', authenticateToken, async (req, res) => {
   }
 });
 
-const obtenerCarritoPorUsuario = async (usuarioId) => {
-  const query = `
-    SELECT producto_id, cantidad 
-    FROM carrito 
-    WHERE usuario_id = $1
-  `;
-  const result = await pool.query(query, [usuarioId]);
-  return result.rows;
-};
-
-const limpiarCarrito = async (usuarioId) => {
-  const query = `
-    DELETE FROM carrito 
-    WHERE usuario_id = $1
-  `;
-  await pool.query(query, [usuarioId]);
-};
