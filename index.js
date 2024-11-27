@@ -2,9 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import jwt from 'jsonwebtoken'; 
 import { obtenerUsuarios, obtenerPerfilUsuario, obtenerOrdenes, obtenerOrdenesHistorial, login, crearOrden, actualizarOrden, eliminarOrden, registrarUsuario, obtenerProductos, crearProducto,
-  obtenerCarro, agregarProductoCarro, eliminarProductoCarro,obtenerPerfilUsuarioConPedidos} from './consultas.js';
+  obtenerCarro, agregarProductoCarro, eliminarProductoCarro,obtenerPerfilUsuarioConPedidos, guardarPedido, eliminarProductoDelCarrito} from './consultas.js';
 import { authenticateToken } from './middleware.js'; 
-import logger from './loggers.js'; // Importa el logger que configuraste
+import logger from './loggers.js';
 
 const app = express();
 const port = 3000;
@@ -20,13 +20,13 @@ app.post('/login', async (req, res) => {
   try {
     const usuario = await login(email, contraseña);
 
-    // Crear el token
+    
     const token = jwt.sign({ id: usuario.id, role: usuario.rol }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-    // Incluir el userId en la respuesta, junto con el token
+   
     return res.json({
       token,
-      userId: usuario.id  // Aquí estamos enviando el userId
+      userId: usuario.id  
     });
   } catch (error) {
     console.error('Error de login:', error.message);
@@ -37,10 +37,9 @@ app.post('/login', async (req, res) => {
 app.post('/usuarios', async (req, res) => {
   const { nombre, apellido, email, contraseña, telefono, direccion, rol } = req.body;
 
-  // Log de los datos recibidos
   logger.info(`Datos recibidos para registro de usuario: ${JSON.stringify(req.body)}`);
 
-  // Validación del rol
+ 
   const rolesPermitidos = ['usuario', 'admin'];
   if (!rolesPermitidos.includes(rol)) {
     logger.error(`Rol no válido recibido: ${rol}`);
@@ -48,17 +47,17 @@ app.post('/usuarios', async (req, res) => {
   }
 
   try {
-    // Log para confirmar que el rol es válido
+    
     logger.info(`Rol válido recibido: ${rol}`);
 
     const nuevoUsuarioId = await registrarUsuario(nombre, apellido, email, contraseña, telefono, direccion, rol);
     
-    // Log cuando el usuario es creado exitosamente
+    
     logger.info(`Usuario creado con ID: ${nuevoUsuarioId}`);
     
     res.status(201).json({ id: nuevoUsuarioId, message: 'Usuario creado exitosamente' });
   } catch (error) {
-    // Log de error en caso de fallar
+   
     logger.error(`Error al registrar el usuario: ${error.message}`);
     res.status(500).json({ message: 'Error al registrar el usuario' });
   }
@@ -86,11 +85,11 @@ app.get('/perfilusuario/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Obtener el carrito
+
 app.get('/carro/:userId', authenticateToken, async (req, res) => {
-  const userId = req.params.userId;  // Obtener el userId de la URL
+  const userId = req.params.userId; 
   try {
-    const carrito = await obtenerCarro(userId);  // Pasar el userId al backend
+    const carrito = await obtenerCarro(userId);  
     res.json(carrito);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener el carrito' });
@@ -111,20 +110,22 @@ app.post('/carro', authenticateToken, async (req, res) => {
 
 
 app.delete('/carro/:productoId', authenticateToken, async (req, res) => {
-  const userId = req.user.id;
-  const { productoId } = req.params;
-
-  logger.info(`Usuario con ID ${userId} intenta eliminar del carrito el producto con ID ${productoId}.`);
+  const userId = req.user.id; 
+  const { productoId } = req.params; 
 
   try {
-    const carro = await eliminarProductoCarro(userId, productoId);
-    logger.info(`Producto con ID ${productoId} eliminado exitosamente del carrito del usuario con ID ${userId}.`);
-    res.json(carro);
+    const result = await eliminarProductoCarro(productoId, userId); 
+
+    if (result) {
+      res.status(200).send({ message: 'Producto eliminado del carrito', items: result });
+    } else {
+      res.status(404).send({ message: 'Producto no encontrado en el carrito' });
+    }
   } catch (error) {
-    logger.error(`Error al eliminar el producto con ID ${productoId} del carrito del usuario con ID ${userId}: ${error.message}`);
-    res.status(500).json({ message: 'Error en el servidor' });
+    res.status(500).send({ message: 'Error al eliminar producto del carrito' });
   }
 });
+
 
 app.get('/ordenes', authenticateToken, async (req, res) => {
   try {
@@ -190,13 +191,13 @@ app.delete('/ordenes/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Iniciar el servidor
+
 app.listen(port, () => {
   console.log(`Servidor corriendo en el puerto ${port}`);
 });
 
 
-// Obtener todos los productos
+
 app.get('/productos', async (req, res) => {
   try {
     const productos = await obtenerProductos();
@@ -207,21 +208,21 @@ app.get('/productos', async (req, res) => {
   }
 });
 
-// Crear un nuevo producto
+
 app.post('/productos', authenticateToken, async (req, res) => {
   const { nombre, descripcion, precio, descuento, stock, juegosId, imagen } = req.body;
 
-  // Log de la solicitud entrante
+ 
   logger.info(`Solicitud POST /productos - Datos: ${JSON.stringify({ nombre, descripcion, precio, descuento, stock, juegosId, imagen })}`);
 
   try {
     const nuevoProductoId = await crearProducto(nombre, descripcion, precio, descuento, stock, juegosId, imagen);
-    // Log cuando el producto es creado con éxito
+   
     logger.info(`Producto creado exitosamente - ID: ${nuevoProductoId}`);
 
     res.status(201).json({ id: nuevoProductoId, message: 'Producto creado exitosamente' });
   } catch (error) {
-    // Log de error
+  
     logger.error('Error al crear el producto:', error);
     res.status(500).json({ message: 'Error al crear el producto' });
   }
@@ -230,7 +231,7 @@ app.post('/productos', authenticateToken, async (req, res) => {
 app.post('/refresh-token', async (req, res) => {
   const { refreshToken } = req.body;
   
-  // Verificar el refresh token en la base de datos, si existe y es válido
+
   try {
     const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
     const newToken = jwt.sign({ id: decoded.id, role: decoded.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
@@ -253,6 +254,52 @@ app.get('/usuario/:id', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error al obtener datos del usuario:', error);
     res.status(500).json({ message: 'Error en el servidor' });
+  }
+});
+
+
+app.delete('/carrito/:id', async (req, res) => {
+  const carritoId = req.params.id;  
+  
+  try {
+    const productoEliminado = await eliminarProductoDelCarrito(carritoId);
+    
+    if (!productoEliminado) {
+      return res.status(404).json({ error: 'Producto no encontrado en el carrito' });
+    }
+
+    return res.status(200).json({
+      message: 'Producto eliminado del carrito',
+      carrito: productoEliminado, 
+    });
+  } catch (err) {
+    console.error('Error al eliminar el producto:', err);
+    return res.status(500).json({ error: 'Error al eliminar el producto del carrito' });
+  }
+});
+
+
+
+
+
+
+app.post('/pedidos', async (req, res) => {
+  const { usuario_id, total, metodo_pago, detalles_pedido } = req.body;
+
+  try {
+    if (!usuario_id || !total || !metodo_pago || !detalles_pedido || detalles_pedido.length === 0) {
+      return res.status(400).json({ error: 'Faltan datos requeridos' });
+    }
+    const nuevoPedido = await guardarPedido(usuario_id, total, metodo_pago, detalles_pedido);
+    if (!nuevoPedido) {
+      return res.status(500).json({ error: 'Hubo un problema al guardar el pedido' });
+    }
+
+    res.status(201).json(nuevoPedido); 
+
+  } catch (error) {
+    console.error('Error al guardar el pedido:', error);
+    res.status(500).json({ error: 'Hubo un problema al guardar el pedido' });
   }
 });
 

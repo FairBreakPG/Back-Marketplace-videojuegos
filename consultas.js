@@ -104,29 +104,25 @@ export const agregarProductoCarro = async (userId, productoId, cantidad) => {
   }
 };
 
-export const eliminarProductoCarro = async (userId, productoId) => {
-  const checkQuery = `
-    SELECT * FROM carrito 
-    WHERE usuario_id = $1 AND producto_id = $2
-  `;
-  const { rows } = await pool.query(checkQuery, [userId, productoId]);
+export const eliminarProductoCarro = async (productoId, usuarioId) => {
+  try {
+    const query = `
+      DELETE FROM carrito
+      WHERE producto_id = $1 AND usuario_id = $2
+      RETURNING *;
+    `;
+    const res = await pool.query(query, [productoId, usuarioId]);
 
-  if (rows.length === 0) {
-    throw new Error('No se encontró el producto en el carrito o ya fue eliminado.');
+    if (res.rowCount > 0) {
+      console.log(`Producto con ID ${productoId} eliminado exitosamente del carrito del usuario con ID ${usuarioId}`);
+      return res.rows[0];  // Retorna el producto eliminado o la fila afectada
+    } else {
+      throw new Error('Producto no encontrado en el carrito del usuario');
+    }
+  } catch (error) {
+    console.error("Error al eliminar el producto del carrito:", error);
+    throw new Error('Error al eliminar el producto del carrito');
   }
-
-  const deleteQuery = `
-    DELETE FROM carrito 
-    WHERE usuario_id = $1 AND producto_id = $2
-    RETURNING id
-  `;
-  const deleteResult = await pool.query(deleteQuery, [userId, productoId]);
-
-  if (!deleteResult.rows[0]) {
-    throw new Error('Error al eliminar el producto del carrito.');
-  }
-
-  return deleteResult.rows[0];
 };
 
 
@@ -248,5 +244,74 @@ export const obtenerPerfilUsuarioConPedidos = async (id) => {
 };
 
 
+export const eliminarProductoDelCarrito = async (carrito_id) => {
+  try {
+    const query = 'DELETE FROM carrito WHERE id = $1 RETURNING *';  
+    const result = await pool.query(query, [carrito_id]); 
+    if (result.rowCount === 0) {
+      throw new Error('Producto no encontrado en el carrito');
+    }
+    return result.rows[0];
+  } catch (err) {
+    console.error('Error al eliminar producto del carrito:', err);
+    throw new Error('Error al eliminar el producto del carrito');
+  }
+};
 
 
+export const guardarPedido = async (usuario_id, total, metodo_pago, detalles_pedido) => {
+  logger.info('Datos recibidos para guardar el pedido:', {
+    usuario_id,
+    total,
+    metodo_pago,
+    detalles_pedido
+  });
+  const client = await pool.connect();
+
+  try {
+    // transaccion back
+    await client.query('BEGIN');
+    logger.info('Iniciando transacción para guardar pedido');
+    const resultPedido = await client.query(
+      `INSERT INTO pedidos (usuario_id, total, metodo_pago)
+       VALUES ($1, $2, $3) RETURNING id`,
+      [usuario_id, total, metodo_pago]
+    );
+    const nuevoPedido = resultPedido.rows[0]; 
+    logger.info('Nuevo pedido creado:', nuevoPedido);
+    const carritoProductos = await client.query(
+      `SELECT c.producto_id, c.cantidad
+       FROM carrito c
+       WHERE c.usuario_id = $1`,
+      [usuario_id]
+    );
+    if (carritoProductos.rows.length === 0) {
+      logger.error('El carrito está vacío para el usuario:', usuario_id);
+      throw new Error('No hay productos en el carrito');
+    }
+    for (const carritoItem of carritoProductos.rows) {
+      logger.info('Insertando detalle del pedido:', carritoItem);
+
+      await client.query(
+        `INSERT INTO detalles_pedido (pedido_id, producto_id, cantidad, precio)
+         VALUES ($1, $2, $3, $4)`,
+        [nuevoPedido.id, carritoItem.producto_id, carritoItem.cantidad, total / carritoProductos.rows.length] // El precio unitario calculado
+      );
+    }
+    await client.query(
+      `INSERT INTO historial_pedidos (pedido_id, estado)
+       VALUES ($1, '0')`, 
+      [nuevoPedido.id]
+    );
+    logger.info('Historial de pedido insertado para el pedido ID:', nuevoPedido.id);
+    await client.query('COMMIT');
+    logger.info('Transacción completada, pedido guardado con éxito');
+    return nuevoPedido; 
+  } catch (error) {
+    await client.query('ROLLBACK');
+    logger.error('Error al guardar el pedido:', error);
+    return null;
+  } finally {
+    client.release(); 
+  }
+};

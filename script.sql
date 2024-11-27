@@ -72,3 +72,18 @@ CREATE TABLE carrito (
   cantidad          INT NOT NULL DEFAULT 1,
   fecha_agregado    TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+
+/*
+cambios en BD AGREGAR A BD que apunta a render
+ALTER TABLE productos
+ALTER COLUMN precio TYPE INT USING precio::INT;
+ALTER TABLE detalles_pedido
+ALTER COLUMN precio TYPE INT USING precio::INT;
+
+ALTER TABLE pedidos
+ALTER COLUMN total TYPE INT USING total::INT;
+
+ALTER TABLE carrito
+ADD CONSTRAINT unique_usuario_producto UNIQUE (usuario_id, producto_id);
+*/
