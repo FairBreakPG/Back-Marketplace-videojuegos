@@ -12,6 +12,17 @@ const port = 3000;
 
 app.use(express.json());
 app.use(cors());
+app.get('/rutas', (req, res) => {
+  const rutas = app._router.stack
+    .filter((middleware) => middleware.route) 
+    .map((middleware) => {
+      const ruta = middleware.route.path;
+      const metodos = Object.keys(middleware.route.methods).join(', ').toUpperCase();
+      return { ruta, metodos };
+    });
+
+  res.json(rutas);
+});
 
 
 app.post('/login', async (req, res) => {
