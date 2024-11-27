@@ -11,7 +11,18 @@ const port = 3000;
 
 
 app.use(express.json());
-app.use(cors());
+//app.use(cors());  ACTIVAR PARA FORMA LOCA
+
+//TODO: aqui prod luego cambiar por variables de ENV
+const corsOptions = {
+  origin: 'https://marketprod.netlify.app', 
+  methods: 'GET,POST,PUT,DELETE',         
+  allowedHeaders: 'Content-Type,Authorization', 
+  credentials: true                      
+};
+
+app.use(cors(corsOptions));
+
 app.get('/rutas', (req, res) => {
   const rutas = app._router.stack
     .filter((middleware) => middleware.route) 
