@@ -23,6 +23,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+/*
 app.get('/rutas', (req, res) => {
   const rutas = app._router.stack
     .filter((middleware) => middleware.route) 
@@ -34,7 +35,7 @@ app.get('/rutas', (req, res) => {
 
   res.json(rutas);
 });
-
+*/
 
 app.post('/login', async (req, res) => {
   const { email, contraseña } = req.body;
