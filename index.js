@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import jwt from 'jsonwebtoken'; 
-import { obtenerUsuarios, obtenerPerfilUsuario, obtenerOrdenes, obtenerOrdenesHistorial, login, crearOrden, actualizarOrden, eliminarOrden, registrarUsuario, obtenerProductos, crearProducto,
+import { obtenerUsuarios, obtenerPerfilUsuario, obtenerOrdenes, obtenerHistorialPedidos, login, crearOrden, actualizarOrden, eliminarOrden, registrarUsuario, obtenerProductos, crearProducto,
   obtenerCarro, agregarProductoCarro, eliminarProductoCarro,obtenerPerfilUsuarioConPedidos, guardarPedido, eliminarProductoDelCarrito} from './consultas.js';
 import { authenticateToken } from './middleware.js'; 
 import logger from './loggers.js';
@@ -11,9 +11,9 @@ const port = 3000;
 
 
 app.use(express.json());
-//app.use(cors());  ACTIVAR PARA FORMA LOCA
+//app.use(cors());  
 
-//TODO: aqui prod luego cambiar por variables de ENV
+
 const corsOptions = {
   origin: 'https://marketprod.netlify.app', 
   methods: 'GET,POST,PUT,DELETE',         
@@ -23,19 +23,6 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-/*
-app.get('/rutas', (req, res) => {
-  const rutas = app._router.stack
-    .filter((middleware) => middleware.route) 
-    .map((middleware) => {
-      const ruta = middleware.route.path;
-      const metodos = Object.keys(middleware.route.methods).join(', ').toUpperCase();
-      return { ruta, metodos };
-    });
-
-  res.json(rutas);
-});
-*/
 
 app.post('/login', async (req, res) => {
   const { email, contraseña } = req.body;
@@ -86,7 +73,7 @@ app.post('/usuarios', async (req, res) => {
   }
 });
 
-app.get('/usuarios', authenticateToken, async (req, res) => {
+app.get('/listarusuarios', authenticateToken, async (req, res) => {
   try {
     const usuarios = await obtenerUsuarios();
     res.json(usuarios);
@@ -163,15 +150,15 @@ app.get('/ordenes', authenticateToken, async (req, res) => {
   }
 });
 
-app.get('/ordenes-historial', authenticateToken, async (req, res) => {
-  const userId = req.user.id;  
-
+app.get('/historial-pedidos', async (req, res) => {
+  const { userId } = req.user; 
+  
   try {
-    const historial = await obtenerOrdenesHistorial(userId);
+    const historial = await obtenerHistorialPedidos(userId);
     res.json(historial);
   } catch (error) {
-    console.error('Error al obtener el historial de órdenes:', error);
-    res.status(500).json({ message: 'Error en el servidor' });
+    console.error('Error al obtener historial de pedidos:', error.message);
+    res.status(500).json({ message: 'Error al obtener el historial de pedidos' });
   }
 });
 
