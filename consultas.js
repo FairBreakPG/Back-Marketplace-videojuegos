@@ -59,7 +59,7 @@ export const registrarUsuario = async (nombre, apellido, email, contraseña, tel
   }
 };
 
-export const obtenerUsuario = async (userId) => {
+export const obtenerUsuarios = async (userId) => {
   const query = `
     SELECT id, nombre, apellido, email, direccion, telefono, fecha_registro, estado, rol
     FROM usuarios
