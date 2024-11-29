@@ -121,12 +121,15 @@ app.get('/carro/:userId', authenticateToken, async (req, res) => {
 
 app.post('/carro', authenticateToken, async (req, res) => {
   const { productoId, cantidad } = req.body;
-  const userId = req.user.id; 
+  const userId = req.user.id;
   
+  logger.info(`Usuario ${userId} está agregando el producto ${productoId} con cantidad ${cantidad} al carrito.`);
+
   try {
     const carro = await agregarProductoCarro(userId, productoId, cantidad);
     res.json(carro);
   } catch (error) {
+    logger.error(`Error al agregar producto al carrito para el usuario ${userId}: ${error.message}`);
     res.status(500).json({ message: 'Error al agregar producto al carrito' });
   }
 });
