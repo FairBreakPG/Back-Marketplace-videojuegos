@@ -336,3 +336,71 @@ export const eliminarProductoCarro = async (usuarioId, productoId) => {
   const result = await pool.query(query, [usuarioId, productoId]);
   return result.rowCount > 0;  
 };
+
+export const getPedidosPorUsuario = async (usuarioId) => {
+  const query = `
+    SELECT 
+      p.id AS pedido_id,
+      p.fecha AS fecha_pedido,
+      p.total,
+      p.estado AS estado_pedido,
+      p.metodo_pago,
+      dp.producto_id,
+      pr.nombre AS producto_nombre,
+      dp.cantidad,
+      dp.precio,
+      hp.estado AS historial_estado,
+      hp.fecha_cambio
+    FROM 
+      pedidos p
+      JOIN detalles_pedido dp ON p.id = dp.pedido_id
+      JOIN productos pr ON dp.producto_id = pr.id
+      LEFT JOIN historial_pedidos hp ON p.id = hp.pedido_id
+    WHERE 
+      p.usuario_id = $1  -- Parámetro de usuarioId
+    ORDER BY p.fecha DESC;
+  `;
+
+  try {
+    const result = await pool.query(query, [usuarioId]);
+    return result.rows;  
+  } catch (err) {
+    console.error('Error en la consulta de pedidos por usuario:', err);
+    throw new Error('Error al obtener los pedidos por usuario');
+  }
+};
+
+
+export const getPedidosTodosUsuarios = async () => {
+  const query = `
+    SELECT 
+      p.id AS pedido_id,
+      p.usuario_id,
+      u.nombre AS usuario_nombre,
+      p.fecha AS fecha_pedido,
+      p.total,
+      p.estado AS estado_pedido,
+      p.metodo_pago,
+      dp.producto_id,
+      pr.nombre AS producto_nombre,
+      dp.cantidad,
+      dp.precio,
+      hp.estado AS historial_estado,
+      hp.fecha_cambio
+    FROM 
+      pedidos p
+      JOIN usuarios u ON p.usuario_id = u.id
+      JOIN detalles_pedido dp ON p.id = dp.pedido_id
+      JOIN productos pr ON dp.producto_id = pr.id
+      LEFT JOIN historial_pedidos hp ON p.id = hp.pedido_id
+    ORDER BY p.fecha DESC;
+  `;
+
+  try {
+    const result = await pool.query(query);
+    return result.rows;  
+  } catch (err) {
+    console.error('Error en la consulta de pedidos de todos los usuarios:', err);
+    throw new Error('Error al obtener los pedidos de todos los usuarios');
+  }
+};

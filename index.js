@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import jwt from 'jsonwebtoken'; 
 import { obtenerUsuarios, obtenerPerfilUsuario, obtenerOrdenes, obtenerHistorialPedidos, login, crearOrden, actualizarOrden, eliminarOrden, registrarUsuario, obtenerProductos, crearProducto,
-  obtenerCarro, agregarProductoCarro, obtenerPerfilUsuarioConPedidos, guardarPedido, eliminarProductoDelCarrito, actualizarPerfilUsuario, eliminarProductoCarro } from './consultas.js';
+  obtenerCarro, agregarProductoCarro, obtenerPerfilUsuarioConPedidos, guardarPedido, eliminarProductoDelCarrito, actualizarPerfilUsuario, eliminarProductoCarro, getPedidosPorUsuario,getPedidosTodosUsuarios } from './consultas.js';
 import { authenticateToken } from './middleware.js'; 
 import logger from './loggers.js';
 
@@ -328,5 +328,29 @@ app.delete('/carrito/:usuarioId/:productoId', authenticateToken, async (req, res
   } catch (error) {
     console.error('Error al eliminar el producto del carrito:', error);
     res.status(500).json({ message: 'Error en el servidor' });
+  }
+});
+
+//listar usuario cliente
+app.get('/pedidos/usuario/:usuarioId', async (req, res) => {
+  const usuarioId = req.params.usuarioId; 
+
+  try {
+    const pedidos = await getPedidosPorUsuario(usuarioId);
+    res.json(pedidos);
+  } catch (err) {
+    console.error('Error al obtener los pedidos:', err);
+    res.status(500).send('Error al obtener los pedidos');
+  }
+});
+
+//listarpedidos admin
+app.get('/pedidosgenerales', async (req, res) => {
+  try {
+    const pedidos = await getPedidosTodosUsuarios();
+    res.json(pedidos);
+  } catch (err) {
+    console.error('Error al obtener los pedidos:', err);
+    res.status(500).send('Error al obtener los pedidos');
   }
 });
