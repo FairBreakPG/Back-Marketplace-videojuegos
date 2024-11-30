@@ -137,23 +137,6 @@ app.post('/carro', authenticateToken, async (req, res) => {
 });
 
 
-app.delete('/carro/:productoId', authenticateToken, async (req, res) => {
-  const userId = req.user.id; 
-  const { productoId } = req.params; 
-
-  try {
-    const result = await eliminarProductoCarro(productoId, userId); 
-
-    if (result) {
-      res.status(200).send({ message: 'Producto eliminado del carrito', items: result });
-    } else {
-      res.status(404).send({ message: 'Producto no encontrado en el carrito' });
-    }
-  } catch (error) {
-    res.status(500).send({ message: 'Error al eliminar producto del carrito' });
-  }
-});
-
 
 app.get('/ordenes', authenticateToken, async (req, res) => {
   try {
