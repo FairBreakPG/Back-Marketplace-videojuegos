@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import jwt from 'jsonwebtoken'; 
 import { obtenerUsuarios, obtenerPerfilUsuario, obtenerOrdenes, obtenerHistorialPedidos, login, crearOrden, actualizarOrden, eliminarOrden, registrarUsuario, obtenerProductos, crearProducto,
-  obtenerCarro, agregarProductoCarro, eliminarProductoCarro,obtenerPerfilUsuarioConPedidos, guardarPedido, eliminarProductoDelCarrito} from './consultas.js';
+  obtenerCarro, agregarProductoCarro, eliminarProductoCarro,obtenerPerfilUsuarioConPedidos, guardarPedido, eliminarProductoDelCarrito, actualizarPerfilUsuario, eliminarProductoCarro} from './consultas.js';
 import { authenticateToken } from './middleware.js'; 
 import logger from './loggers.js';
 
@@ -83,6 +83,7 @@ app.get('/listarusuarios', authenticateToken, async (req, res) => {
   }
 });
 
+//obtener un usuario
 app.get('/perfilusuario/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   
@@ -92,6 +93,20 @@ app.get('/perfilusuario/:id', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Error al obtener perfil de usuario:', error);
     res.status(500).json({ message: 'Error en el servidor' });
+  }
+});
+
+//llamar a modificar un usuario 
+app.put('/perfilusuario/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params; 
+  const { nombre, apellido, email, telefono, direccion } = req.body; 
+
+  try {
+    const perfilActualizado = await actualizarPerfilUsuario(id, { nombre, apellido, email, telefono, direccion });
+    res.json(perfilActualizado);
+  } catch (error) {
+    console.error('Error al actualizar el perfil de usuario:', error);
+    res.status(500).json({ message: 'Error al actualizar el perfil' });
   }
 });
 
@@ -316,3 +331,19 @@ app.post('/pedidos', async (req, res) => {
   }
 });
 
+//nuevo borrado carrito 
+app.delete('/carrito/:usuarioId/:productoId', authenticateToken, async (req, res) => {
+  const { usuarioId, productoId } = req.params;
+
+  try {
+    const result = await eliminarProductoCarro(usuarioId, productoId);
+    if (result) {
+      res.status(200).json({ message: 'Producto eliminado del carrito' });
+    } else {
+      res.status(404).json({ message: 'Producto no encontrado en el carrito' });
+    }
+  } catch (error) {
+    console.error('Error al eliminar el producto del carrito:', error);
+    res.status(500).json({ message: 'Error en el servidor' });
+  }
+});

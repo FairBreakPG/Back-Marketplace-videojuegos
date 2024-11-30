@@ -79,6 +79,24 @@ export const obtenerPerfilUsuario = async (id) => {
   return result.rows[0];
 };
 
+export const actualizarPerfilUsuario = async (id, { nombre, apellido, email, telefono, direccion }) => {
+  const query = `
+    UPDATE usuarios
+    SET 
+      nombre = $1, 
+      apellido = $2, 
+      email = $3, 
+      telefono = $4, 
+      direccion = $5
+    WHERE id = $6
+    RETURNING id, nombre, apellido, email, telefono, direccion, rol;
+  `;
+
+  const result = await pool.query(query, [nombre, apellido, email, telefono, direccion, id]);
+
+  return result.rows[0];
+};
+
 export const obtenerCarro = async (userId) => {
   const query = `
     SELECT c.id, c.cantidad, p.nombre AS name, p.precio AS price, p.imagen AS img 
@@ -329,4 +347,12 @@ export const guardarPedido = async (usuario_id, total, metodo_pago, detalles_ped
   } finally {
     client.release(); 
   }
+};
+
+
+//nuevo borrado carrito 
+const eliminarProductoCarro = async (usuarioId, productoId) => {
+  const query = 'DELETE FROM carrito WHERE usuario_id = $1 AND producto_id = $2 RETURNING *';
+  const result = await pool.query(query, [usuarioId, productoId]);
+  return result.rowCount > 0;  
 };
