@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import jwt from 'jsonwebtoken'; 
 import { obtenerUsuarios, obtenerPerfilUsuario, obtenerOrdenes, obtenerHistorialPedidos, login, crearOrden, actualizarOrden, eliminarOrden, registrarUsuario, obtenerProductos, crearProducto,
-  obtenerCarro, agregarProductoCarro, eliminarProductoCarro,obtenerPerfilUsuarioConPedidos, guardarPedido, eliminarProductoDelCarrito, actualizarPerfilUsuario, eliminarProductoCarro} from './consultas.js';
+  obtenerCarro, agregarProductoCarro, obtenerPerfilUsuarioConPedidos, guardarPedido, eliminarProductoDelCarrito, actualizarPerfilUsuario, eliminarProductoCarro} from './consultas.js';
 import { authenticateToken } from './middleware.js'; 
 import logger from './loggers.js';
 

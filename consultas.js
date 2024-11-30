@@ -130,26 +130,6 @@ export const agregarProductoCarro = async (userId, productoId, cantidad) => {
   }
 };
 
-export const eliminarProductoCarro = async (productoId, usuarioId) => {
-  try {
-    const query = `
-      DELETE FROM carrito
-      WHERE producto_id = $1 AND usuario_id = $2
-      RETURNING *;
-    `;
-    const res = await pool.query(query, [productoId, usuarioId]);
-
-    if (res.rowCount > 0) {
-      console.log(`Producto con ID ${productoId} eliminado exitosamente del carrito del usuario con ID ${usuarioId}`);
-      return res.rows[0];  // Retorna el producto eliminado o la fila afectada
-    } else {
-      throw new Error('Producto no encontrado en el carrito del usuario');
-    }
-  } catch (error) {
-    console.error("Error al eliminar el producto del carrito:", error);
-    throw new Error('Error al eliminar el producto del carrito');
-  }
-};
 
 
 
