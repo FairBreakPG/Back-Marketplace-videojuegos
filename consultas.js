@@ -331,7 +331,7 @@ export const guardarPedido = async (usuario_id, total, metodo_pago, detalles_ped
 
 
 //nuevo borrado carrito 
-const eliminarProductoCarro = async (usuarioId, productoId) => {
+export const eliminarProductoCarro = async (usuarioId, productoId) => {
   const query = 'DELETE FROM carrito WHERE usuario_id = $1 AND producto_id = $2 RETURNING *';
   const result = await pool.query(query, [usuarioId, productoId]);
   return result.rowCount > 0;  
