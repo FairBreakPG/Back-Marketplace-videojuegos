@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import jwt from 'jsonwebtoken'; 
 import { obtenerUsuarios, obtenerPerfilUsuario, obtenerOrdenes, obtenerHistorialPedidos, login, crearOrden, actualizarOrden, eliminarOrden, registrarUsuario, obtenerProductos, crearProducto,
-  obtenerCarro, agregarProductoCarro, obtenerPerfilUsuarioConPedidos, guardarPedido, eliminarProductoDelCarrito, actualizarPerfilUsuario, eliminarProductoCarro, getPedidosPorUsuario,getPedidosTodosUsuarios } from './consultas.js';
+  obtenerCarro, agregarProductoCarro, obtenerPerfilUsuarioConPedidos, guardarPedido, eliminarProductoDelCarrito, actualizarPerfilUsuario, getPedidosPorUsuario,getPedidosTodosUsuarios } from './consultas.js';
 import { authenticateToken } from './middleware.js'; 
 import logger from './loggers.js';
 
@@ -269,7 +269,7 @@ app.get('/usuario/:id', authenticateToken, async (req, res) => {
 });
 
 
-app.delete('/carrito/:id', async (req, res) => {
+app.delete('/eliminarProductoCarrito/:id', async (req, res) => {
   const carritoId = req.params.id;  
   
   try {
@@ -314,22 +314,7 @@ app.post('/pedidos', async (req, res) => {
   }
 });
 
-//nuevo borrado carrito 
-app.delete('/carrito/:usuarioId/:productoId', authenticateToken, async (req, res) => {
-  const { usuarioId, productoId } = req.params;
 
-  try {
-    const result = await eliminarProductoCarro(usuarioId, productoId);
-    if (result) {
-      res.status(200).json({ message: 'Producto eliminado del carrito' });
-    } else {
-      res.status(404).json({ message: 'Producto no encontrado en el carrito' });
-    }
-  } catch (error) {
-    console.error('Error al eliminar el producto del carrito:', error);
-    res.status(500).json({ message: 'Error en el servidor' });
-  }
-});
 
 //listar usuario cliente
 app.get('/pedidos/usuario/:usuarioId', async (req, res) => {
