@@ -89,15 +89,16 @@ export const actualizarPerfilUsuario = async (id, { nombre, apellido, email, tel
 
 export const obtenerCarro = async (userId) => {
   const query = `
-    SELECT 
+ SELECT 
   c.id AS carrito_id, 
   c.cantidad, 
-  p.nombre AS product_name, 
-  p.precio AS product_price, 
-  p.imagen AS product_image
-  FROM carrito c
-  JOIN productos p ON c.producto_id = p.id
-  JOIN usuarios u ON c.usuario_id = u.id
+  p.nombre AS nombre, 
+  p.precio AS precio, 
+  p.imagen AS imagen,
+  u.id as id_user
+FROM carrito c
+JOIN productos p ON c.producto_id = p.id
+JOIN usuarios u ON c.usuario_id = u.id
   WHERE c.usuario_id = $1; 
   `;
   const { rows } = await pool.query(query, [userId]);
