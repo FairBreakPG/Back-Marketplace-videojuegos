@@ -150,8 +150,8 @@ app.get('/ordenes', authenticateToken, async (req, res) => {
 });
 
 app.get('/historial-pedidos', async (req, res) => {
-  const { userId } = req.user; 
-  
+  //const { userId } = req.user; 
+  const userId = req.user.id;
   try {
     const historial = await obtenerHistorialPedidos(userId);
     res.json(historial);
@@ -271,8 +271,9 @@ app.get('/usuario/:id', authenticateToken, async (req, res) => {
 
 
 app.delete('/eliminarProductoCarrito/:id', async (req, res) => {
-  const carritoId = req.params.id;  
-  
+  //const carritoId = req.params.id;  
+  const carritoId = req.carrito.id;
+
   try {
     const productoEliminado = await eliminarProductoDelCarrito(carritoId);
     
@@ -319,7 +320,9 @@ app.post('/pedidos', async (req, res) => {
 
 //listar usuario cliente
 app.get('/pedidos/usuario/:usuarioId', async (req, res) => {
-  const usuarioId = req.params.usuarioId; 
+  //const usuarioId = req.params.usuarioId; 
+  const usuarioId = req.user.id;
+
 
   try {
     const pedidos = await getPedidosPorUsuario(usuarioId);
