@@ -198,7 +198,7 @@ export const obtenerPerfilUsuarioConPedidos = async (id) => {
   }
 };
 
-export const eliminarProductoDelCarritoPorUsuario = async (userId) => {
+export const eliminarProductoDelCarrito = async (userId) => {
   try {
     const query = 'DELETE FROM carrito WHERE usuario_id = $1 RETURNING *';  
     const result = await pool.query(query, [userId]); 
