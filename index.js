@@ -69,8 +69,7 @@ app.get('/listarusuarios', authenticateToken, async (req, res) => {
 
 //obtener un usuario
 app.get('/perfilusuario/:id', authenticateToken, async (req, res) => {
-  const { id } = req.params;
-  //const { id } = req.user.userId;
+  const { id } = req.user; 
   try {
     const perfil = await obtenerPerfilUsuario(id);
     res.json(perfil);
@@ -96,8 +95,7 @@ app.put('/perfilusuario/:id', authenticateToken, async (req, res) => {
 
 
 app.get('/obtenercarroporusuario/:userId', authenticateToken, async (req, res) => {
-  const userId = req.params.userId; 
-  //const userId = req.user.id;
+  const userId = req.user.id; 
   try {
     const carrito = await obtenerCarro(userId);  
     res.json(carrito);
@@ -153,17 +151,6 @@ app.post('/productos', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/refresh-token', async (req, res) => {
-  const { refreshToken } = req.body;
-  try {
-    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
-    const newToken = jwt.sign({ id: decoded.id, role: decoded.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-    return res.json({ token: newToken });
-  } catch (error) {
-    return res.status(403).json({ message: 'Refresh token inválido' });
-  }
-});
 
 app.get('/usuario/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
