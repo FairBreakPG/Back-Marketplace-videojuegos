@@ -70,7 +70,7 @@ app.get('/listarusuarios', authenticateToken, async (req, res) => {
 //obtener un usuario
 app.get('/perfilusuario/:id', authenticateToken, async (req, res) => {
   //const { id } = req.params;
-  const { id } = req.user.id;
+  const { id } = req.user.userId;
   try {
     const perfil = await obtenerPerfilUsuario(id);
     res.json(perfil);
