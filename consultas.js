@@ -198,17 +198,17 @@ export const obtenerPerfilUsuarioConPedidos = async (id) => {
   }
 };
 
-export const eliminarProductoDelCarrito = async (carrito_id) => {
+export const eliminarProductoDelCarritoPorUsuario = async (userId) => {
   try {
-    const query = 'DELETE FROM carrito WHERE id = $1 RETURNING *';  
-    const result = await pool.query(query, [carrito_id]); 
+    const query = 'DELETE FROM carrito WHERE usuario_id = $1 RETURNING *';  
+    const result = await pool.query(query, [userId]); 
     if (result.rowCount === 0) {
-      throw new Error('Producto no encontrado en el carrito');
+      throw new Error('No se encontraron productos en el carrito para este usuario');
     }
-    return result.rows[0];
+    return result.rows; 
   } catch (err) {
-    console.error('Error al eliminar producto del carrito:', err);
-    throw new Error('Error al eliminar el producto del carrito');
+    console.error('Error al eliminar productos del carrito para el usuario:', err);
+    throw new Error('Error al eliminar los productos del carrito');
   }
 };
 
