@@ -85,7 +85,8 @@ app.get('/listarusuarios', authenticateToken, async (req, res) => {
 
 //obtener un usuario
 app.get('/perfilusuario/:id', authenticateToken, async (req, res) => {
-  const { id } = req.params;
+  //const { id } = req.params;
+  const { id } = req.user.id;
   
   try {
     const perfil = await obtenerPerfilUsuario(id);
@@ -98,7 +99,8 @@ app.get('/perfilusuario/:id', authenticateToken, async (req, res) => {
 
 //llamar a modificar un usuario 
 app.put('/perfilusuario/:id', authenticateToken, async (req, res) => {
-  const { id } = req.params; 
+  //const { id } = req.params; 
+  const { id } = req.user.id;
   const { nombre, apellido, email, telefono, direccion } = req.body; 
 
   try {
@@ -272,7 +274,7 @@ app.get('/usuario/:id', authenticateToken, async (req, res) => {
 
 app.delete('/eliminarProductoCarrito/:id', async (req, res) => {
   //const carritoId = req.params.id;  
-  const carritoId = req.carrito.id;
+  const carritoId = req.productos.id;
 
   try {
     const productoEliminado = await eliminarProductoDelCarrito(carritoId);
