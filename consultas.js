@@ -89,15 +89,28 @@ export const actualizarPerfilUsuario = async (id, { nombre, apellido, email, tel
 
 export const obtenerCarro = async (userId) => {
   const query = `
-    SELECT c.id, c.cantidad, p.nombre AS name, p.precio AS price, p.imagen AS img 
-    FROM carrito c
-    JOIN productos p ON c.producto_id = p.id
-    WHERE c.usuario_id = $1
+    SELECT 
+  c.id AS carrito_id, 
+  c.cantidad, 
+  p.nombre AS product_name, 
+  p.precio AS product_price, 
+  p.imagen AS product_image
+  FROM carrito c
+  JOIN productos p ON c.producto_id = p.id
+  JOIN usuarios u ON c.usuario_id = u.id
+  WHERE c.usuario_id = $1; 
   `;
   const { rows } = await pool.query(query, [userId]);
   const total = rows.reduce((sum, item) => sum + item.price * item.cantidad, 0);
   return { items: rows, total };
 };
+/*
+ SELECT c.id, c.cantidad, p.nombre AS name, p.precio AS price, p.imagen AS img 
+    FROM carrito c
+    JOIN productos p ON c.producto_id = p.id
+    WHERE c.usuario_id = $1
+  `;
+*/
 
 export const agregarProductoCarro = async (userId, productoId, cantidad) => {
   logger.info(`Intentando agregar producto al carrito: usuario_id=${userId}, producto_id=${productoId}, cantidad=${cantidad}`);

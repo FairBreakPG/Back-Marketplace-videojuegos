@@ -18,7 +18,7 @@ export const authenticateToken = (req, res, next) => {
       
       return res.status(403).json({ message: 'Token no válido' });
     }
-
+    logger.info(`Usuario autenticado: ${JSON.stringify(user)}`);  
     req.user = user;
     next();
   });

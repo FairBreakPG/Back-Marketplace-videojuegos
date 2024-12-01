@@ -168,7 +168,7 @@ app.get('/usuario/:id', authenticateToken, async (req, res) => {
 
 
 app.delete('/eliminarProductoCarrito', async (req, res) => {
-  const { userId, productoId } = req.body;  
+  const { userId, productoId } = req.body;
   
   console.log("User ID y Producto ID recibido:", userId, productoId); 
   if (!userId || !productoId) {
