@@ -112,7 +112,8 @@ app.put('/perfilusuario/:id', authenticateToken, async (req, res) => {
 
 
 app.get('/carro/:userId', authenticateToken, async (req, res) => {
-  const userId = req.params.userId; 
+  //const userId = req.params.userId; 
+  const userId = req.user.id;
   try {
     const carrito = await obtenerCarro(userId);  
     res.json(carrito);
