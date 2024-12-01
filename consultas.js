@@ -118,7 +118,21 @@ export const agregarProductoCarro = async (userId, productoId, cantidad) => {
     throw new Error(error.message || "Error al agregar producto al carrito");
   }
 };
-
+export const obtenerHistorialPedidos = async (userId) => {
+  const query = `
+    SELECT p.id AS pedido_id, p.fecha, p.total, p.estado AS estado_pedido, p.metodo_pago, 
+           hp.estado AS estado_historial, hp.fecha_cambio
+    FROM pedidos p
+    LEFT JOIN historial_pedidos hp ON p.id = hp.pedido_id
+    WHERE p.usuario_id = $1
+    ORDER BY p.fecha DESC
+  `;
+  const result = await pool.query(query, [userId]);
+  if (result.rows.length === 0) {
+    throw new Error('No se encontraron pedidos para este usuario');
+  }
+  return result.rows;
+};
 
 export const obtenerProductos = async () => {
   const query = `
