@@ -168,8 +168,7 @@ app.get('/usuario/:id', authenticateToken, async (req, res) => {
 
 
 app.delete('/eliminarProductoCarrito/:id', async (req, res) => {
-  const carritoId = req.params.id;  
-  //const carritoId = req.productos.id;
+  const { carritoId } = req.body;
   try {
     const productoEliminado = await eliminarProductoDelCarrito(carritoId);
     if (!productoEliminado) {
