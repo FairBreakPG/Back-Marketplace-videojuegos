@@ -120,8 +120,7 @@ app.post('/carro', authenticateToken, async (req, res) => {
 });
 
 app.get('/historial-pedidos', async (req, res) => {
-  //const { userId } = req.user; 
-  const userId = req.user.id;
+  const { userId } = req.user; 
   try {
     const historial = await obtenerHistorialPedidos(userId);
     res.json(historial);
