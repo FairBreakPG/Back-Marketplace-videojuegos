@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import jwt from 'jsonwebtoken'; 
-import { obtenerUsuarios, obtenerPerfilUsuario, obtenerOrdenes, obtenerHistorialPedidos, login, crearOrden, actualizarOrden, eliminarOrden, registrarUsuario, obtenerProductos, crearProducto,
+import { obtenerUsuarios, obtenerPerfilUsuario,  obtenerHistorialPedidos, login, registrarUsuario, obtenerProductos, crearProducto,
   obtenerCarro, agregarProductoCarro, obtenerPerfilUsuarioConPedidos, guardarPedido, eliminarProductoDelCarrito, actualizarPerfilUsuario, getPedidosPorUsuario,getPedidosTodosUsuarios } from './consultas.js';
 import { authenticateToken } from './middleware.js'; 
 import logger from './loggers.js';
@@ -9,10 +9,8 @@ import logger from './loggers.js';
 const app = express();
 const port = 3000;
 
-
 app.use(express.json());
 //app.use(cors());  
-
 
 const corsOptions = {
   origin: 'https://marketprod.netlify.app', 
@@ -29,11 +27,7 @@ app.post('/login', async (req, res) => {
   
   try {
     const usuario = await login(email, contraseña);
-
-    
     const token = jwt.sign({ id: usuario.id, role: usuario.rol }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-   
     return res.json({
       token,
       userId: usuario.id  
@@ -46,28 +40,18 @@ app.post('/login', async (req, res) => {
 
 app.post('/usuarios', async (req, res) => {
   const { nombre, apellido, email, contraseña, telefono, direccion, rol } = req.body;
-
   logger.info(`Datos recibidos para registro de usuario: ${JSON.stringify(req.body)}`);
-
- 
   const rolesPermitidos = ['usuario', 'admin'];
   if (!rolesPermitidos.includes(rol)) {
     logger.error(`Rol no válido recibido: ${rol}`);
     return res.status(400).json({ message: 'Rol no válido' });
   }
-
   try {
-    
     logger.info(`Rol válido recibido: ${rol}`);
-
     const nuevoUsuarioId = await registrarUsuario(nombre, apellido, email, contraseña, telefono, direccion, rol);
-    
-    
     logger.info(`Usuario creado con ID: ${nuevoUsuarioId}`);
-    
     res.status(201).json({ id: nuevoUsuarioId, message: 'Usuario creado exitosamente' });
   } catch (error) {
-   
     logger.error(`Error al registrar el usuario: ${error.message}`);
     res.status(500).json({ message: 'Error al registrar el usuario' });
   }
@@ -87,7 +71,6 @@ app.get('/listarusuarios', authenticateToken, async (req, res) => {
 app.get('/perfilusuario/:id', authenticateToken, async (req, res) => {
   //const { id } = req.params;
   const { id } = req.user.id;
-  
   try {
     const perfil = await obtenerPerfilUsuario(id);
     res.json(perfil);
@@ -102,7 +85,6 @@ app.put('/perfilusuario/:id', authenticateToken, async (req, res) => {
   //const { id } = req.params; 
   const { id } = req.user.id;
   const { nombre, apellido, email, telefono, direccion } = req.body; 
-
   try {
     const perfilActualizado = await actualizarPerfilUsuario(id, { nombre, apellido, email, telefono, direccion });
     res.json(perfilActualizado);
@@ -127,27 +109,13 @@ app.get('/obtenercarroporusuario/:userId', authenticateToken, async (req, res) =
 app.post('/carro', authenticateToken, async (req, res) => {
   const { productoId, cantidad } = req.body;
   const userId = req.user.id;
-  
   logger.info(`Usuario ${userId} está agregando el producto ${productoId} con cantidad ${cantidad} al carrito.`);
-
   try {
     const carro = await agregarProductoCarro(userId, productoId, cantidad);
     res.json(carro);
   } catch (error) {
     logger.error(`Error al agregar producto al carrito para el usuario ${userId}: ${error.message}`);
     res.status(500).json({ message: 'Error al agregar producto al carrito' });
-  }
-});
-
-
-
-app.get('/ordenes', authenticateToken, async (req, res) => {
-  try {
-    const ordenes = await obtenerOrdenes();
-    res.json(ordenes);
-  } catch (error) {
-    console.error('Error al obtener las órdenes:', error);
-    res.status(500).json({ message: 'Error en el servidor' });
   }
 });
 
@@ -163,55 +131,6 @@ app.get('/historial-pedidos', async (req, res) => {
   }
 });
 
-
-app.post('/ordenes', authenticateToken, async (req, res) => {
-  const userId = req.user.id;
-  const { items, total, metodoPago } = req.body;
-  
-  try {
-    const nuevaOrden = await crearOrden(userId, items, total, metodoPago);
-    res.status(201).json(nuevaOrden);
-  } catch (error) {
-    console.error('Error al crear la orden:', error);
-    res.status(500).json({ message: 'Error en el servidor' });
-  }
-});
-
-
-app.put('/ordenes/:id', authenticateToken, async (req, res) => {
-  const { id } = req.params;
-  const { estado } = req.body;
-  
-  try {
-    const ordenActualizada = await actualizarOrden(id, estado);
-    res.json(ordenActualizada);
-  } catch (error) {
-    console.error('Error al actualizar la orden:', error);
-    res.status(500).json({ message: 'Error en el servidor' });
-  }
-});
-
-
-
-app.delete('/ordenes/:id', authenticateToken, async (req, res) => {
-  const { id } = req.params;
-  
-  try {
-    const ordenEliminada = await eliminarOrden(id);
-    res.json(ordenEliminada);
-  } catch (error) {
-    console.error('Error al eliminar la orden:', error);
-    res.status(500).json({ message: 'Error en el servidor' });
-  }
-});
-
-
-app.listen(port, () => {
-  console.log(`Servidor corriendo en el puerto ${port}`);
-});
-
-
-
 app.get('/productos', async (req, res) => {
   try {
     const productos = await obtenerProductos();
@@ -222,21 +141,14 @@ app.get('/productos', async (req, res) => {
   }
 });
 
-
 app.post('/productos', authenticateToken, async (req, res) => {
   const { nombre, descripcion, precio, descuento, stock, juegosId, imagen } = req.body;
-
- 
   logger.info(`Solicitud POST /productos - Datos: ${JSON.stringify({ nombre, descripcion, precio, descuento, stock, juegosId, imagen })}`);
-
   try {
     const nuevoProductoId = await crearProducto(nombre, descripcion, precio, descuento, stock, juegosId, imagen);
-   
     logger.info(`Producto creado exitosamente - ID: ${nuevoProductoId}`);
-
     res.status(201).json({ id: nuevoProductoId, message: 'Producto creado exitosamente' });
   } catch (error) {
-  
     logger.error('Error al crear el producto:', error);
     res.status(500).json({ message: 'Error al crear el producto' });
   }
@@ -244,8 +156,6 @@ app.post('/productos', authenticateToken, async (req, res) => {
 
 app.post('/refresh-token', async (req, res) => {
   const { refreshToken } = req.body;
-  
-
   try {
     const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
     const newToken = jwt.sign({ id: decoded.id, role: decoded.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
@@ -258,7 +168,6 @@ app.post('/refresh-token', async (req, res) => {
 
 app.get('/usuario/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
-
   try {
     const data = await obtenerPerfilUsuarioConPedidos(id);
     if (!data) {
@@ -275,14 +184,11 @@ app.get('/usuario/:id', authenticateToken, async (req, res) => {
 app.delete('/eliminarProductoCarrito/:id', async (req, res) => {
   //const carritoId = req.params.id;  
   const carritoId = req.productos.id;
-
   try {
     const productoEliminado = await eliminarProductoDelCarrito(carritoId);
-    
     if (!productoEliminado) {
       return res.status(404).json({ error: 'Producto no encontrado en el carrito' });
     }
-
     return res.status(200).json({
       message: 'Producto eliminado del carrito',
       carrito: productoEliminado, 
@@ -294,13 +200,8 @@ app.delete('/eliminarProductoCarrito/:id', async (req, res) => {
 });
 
 
-
-
-
-
 app.post('/pedidos', async (req, res) => {
   const { usuario_id, total, metodo_pago, detalles_pedido } = req.body;
-
   try {
     if (!usuario_id || !total || !metodo_pago || !detalles_pedido || detalles_pedido.length === 0) {
       return res.status(400).json({ error: 'Faltan datos requeridos' });
@@ -309,9 +210,7 @@ app.post('/pedidos', async (req, res) => {
     if (!nuevoPedido) {
       return res.status(500).json({ error: 'Hubo un problema al guardar el pedido' });
     }
-
     res.status(201).json(nuevoPedido); 
-
   } catch (error) {
     console.error('Error al guardar el pedido:', error);
     res.status(500).json({ error: 'Hubo un problema al guardar el pedido' });
@@ -324,8 +223,6 @@ app.post('/pedidos', async (req, res) => {
 app.get('/pedidos/usuario/:usuarioId', async (req, res) => {
   //const usuarioId = req.params.usuarioId; 
   const usuarioId = req.user.id;
-
-
   try {
     const pedidos = await getPedidosPorUsuario(usuarioId);
     res.json(pedidos);
@@ -344,4 +241,8 @@ app.get('/pedidosgenerales', async (req, res) => {
     console.error('Error al obtener los pedidos:', err);
     res.status(500).send('Error al obtener los pedidos');
   }
+});
+
+app.listen(port, () => {
+  console.log(`Servidor corriendo en el puerto ${port}`);
 });

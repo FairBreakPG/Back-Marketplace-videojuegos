@@ -7,6 +7,7 @@ import logger from './loggers.js';
 const { Pool } = pg;
 const { DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_DATABASE } = process.env;
 
+
 const pool = new Pool({
   host: DB_HOST, 
   user: DB_USER,
@@ -19,43 +20,34 @@ const pool = new Pool({
 export const login = async (email, contraseña) => {
   const query = `SELECT id, nombre, apellido, email, contraseña, rol FROM usuarios WHERE email = $1 AND estado = '1'`;
   const result = await pool.query(query, [email]);
-
   if (result.rows.length === 0) {
     throw new Error('Credenciales inválidas');
   }
-
   const usuario = result.rows[0];
-
   const esValida = await bcrypt.compare(contraseña, usuario.contraseña);
-
   if (!esValida) {
     throw new Error('Credenciales inválidas');
   }
-
   return usuario; 
 };
 
 export const registrarUsuario = async (nombre, apellido, email, contraseña, telefono, direccion, rol) => {
   logger.info(`Registrando usuario: nombre=${nombre}, apellido=${apellido}, email=${email}, telefono=${telefono}, direccion=${direccion}, rol=${rol}`);
-
   if (!nombre || !apellido || !email || !contraseña || !telefono || !direccion || !rol) {
     logger.error('Faltan datos requeridos para registrar al usuario');
     throw new Error('Faltan datos para registrar al usuario');
   }
-
   const hashedPassword = await bcrypt.hash(contraseña, 10); 
-
   const query = `
     INSERT INTO usuarios (nombre, apellido, email, contraseña, telefono, direccion, rol, estado)
     VALUES ($1, $2, $3, $4, $5, $6, $7, '1') RETURNING id
   `;
-  
   try {
     const result = await pool.query(query, [nombre, apellido, email, hashedPassword, telefono, direccion, rol]);
     return result.rows[0].id;  
   } catch (error) {
     logger.error(`Error en la consulta SQL: ${error.message}`);
-    throw error;  // Propagar el error hacia el controlador
+    throw error;  
   }
 };
 
@@ -91,9 +83,7 @@ export const actualizarPerfilUsuario = async (id, { nombre, apellido, email, tel
     WHERE id = $6
     RETURNING id, nombre, apellido, email, telefono, direccion, rol;
   `;
-
   const result = await pool.query(query, [nombre, apellido, email, telefono, direccion, id]);
-
   return result.rows[0];
 };
 
@@ -111,7 +101,6 @@ export const obtenerCarro = async (userId) => {
 
 export const agregarProductoCarro = async (userId, productoId, cantidad) => {
   logger.info(`Intentando agregar producto al carrito: usuario_id=${userId}, producto_id=${productoId}, cantidad=${cantidad}`);
-
   const query = `
   INSERT INTO carrito (usuario_id, producto_id, cantidad)
   VALUES ($1, $2, $3)
@@ -130,67 +119,6 @@ export const agregarProductoCarro = async (userId, productoId, cantidad) => {
   }
 };
 
-
-
-
-
-export const obtenerOrdenes = async () => {
-  const query = `
-    SELECT p.id, p.total, p.fecha, p.estado, u.nombre AS cliente
-    FROM pedidos p
-    JOIN usuarios u ON p.usuario_id = u.id
-  `;
-  const result = await pool.query(query);
-  return result.rows;
-};
-
-export const obtenerHistorialPedidos = async (userId) => {
-  const query = `
-    SELECT p.id AS pedido_id, p.fecha, p.total, p.estado AS estado_pedido, p.metodo_pago, 
-           hp.estado AS estado_historial, hp.fecha_cambio
-    FROM pedidos p
-    LEFT JOIN historial_pedidos hp ON p.id = hp.pedido_id
-    WHERE p.usuario_id = $1
-    ORDER BY p.fecha DESC
-  `;
-  const result = await pool.query(query, [userId]);
-
-  if (result.rows.length === 0) {
-    throw new Error('No se encontraron pedidos para este usuario');
-  }
-  return result.rows;
-};
-
-export const crearOrden = async (userId, items, total, metodoPago) => {
-  const query = `
-    INSERT INTO pedidos (usuario_id, total, metodo_pago)
-    VALUES ($1, $2, $3) RETURNING id
-  `;
-  const result = await pool.query(query, [userId, total, metodoPago]);
-  const orderId = result.rows[0].id;
-
-  for (let item of items) {
-    const queryDetalle = `
-      INSERT INTO detalles_pedido (pedido_id, producto_id, cantidad, precio)
-      VALUES ($1, $2, $3, $4)
-    `;
-    await pool.query(queryDetalle, [orderId, item.producto_id, item.cantidad, item.precio]);
-  }
-
-  return { orderId, total, metodoPago };
-};
-
-export const actualizarOrden = async (orderId, estado) => {
-  const query = 'UPDATE pedidos SET estado = $1 WHERE id = $2 RETURNING *';
-  const result = await pool.query(query, [estado, orderId]);
-  return result.rows[0];
-};
-
-export const eliminarOrden = async (orderId) => {
-  const query = 'DELETE FROM pedidos WHERE id = $1 RETURNING *';
-  const result = await pool.query(query, [orderId]);
-  return result.rows[0];
-};
 
 export const obtenerProductos = async () => {
   const query = `
@@ -256,7 +184,6 @@ export const obtenerPerfilUsuarioConPedidos = async (id) => {
   }
 };
 
-
 export const eliminarProductoDelCarrito = async (carrito_id) => {
   try {
     const query = 'DELETE FROM carrito WHERE id = $1 RETURNING *';  
@@ -270,7 +197,6 @@ export const eliminarProductoDelCarrito = async (carrito_id) => {
     throw new Error('Error al eliminar el producto del carrito');
   }
 };
-
 
 export const guardarPedido = async (usuario_id, total, metodo_pago, detalles_pedido) => {
   logger.info('Datos recibidos para guardar el pedido:', {

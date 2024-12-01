@@ -9,8 +9,8 @@ const logger = winston.createLogger({
     })
   ),
   transports: [
-    new winston.transports.Console(), // Muestra los logs en consola
-    new winston.transports.File({ filename: 'logs/app.log' }), // Guarda los logs en un archivo
+    new winston.transports.Console(), 
+    new winston.transports.File({ filename: 'logs/app.log' }), 
   ],
 });
 
