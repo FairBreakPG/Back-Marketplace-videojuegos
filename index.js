@@ -81,16 +81,16 @@ app.get('/perfilusuario/:id', authenticateToken, async (req, res) => {
 });
 */
 app.get('/perfilusuario', authenticateToken, async (req, res) => {
-  const { userId } = req.user; 
-  
+  console.log(req.user);  
+  const userId = req.user.id; 
   try {
     const perfil = await obtenerPerfilUsuario(userId);  
-    res.json(perfil);
+    res.json(perfil);  
   } catch (error) {
-    console.error('Error al obtener perfil de usuario:', error);
     res.status(500).json({ message: 'Error en el servidor' });
   }
 });
+
 
 /*
 //llamar a modificar un usuario 
@@ -108,11 +108,11 @@ app.put('/perfilusuario/:id', authenticateToken, async (req, res) => {
 });
 */
 app.put('/actualizar-perfil', authenticateToken, async (req, res) => {
-  const { id } = req.user;
+  const userId = req.user.id; 
   const { nombre, apellido, email, telefono, direccion } = req.body;
 
   try {
-    const perfilActualizado = await actualizarPerfilUsuario(id, { nombre, apellido, email, telefono, direccion });
+    const perfilActualizado = await actualizarPerfilUsuario(userId, { nombre, apellido, email, telefono, direccion });
     res.json(perfilActualizado);
   } catch (error) {
     console.error('Error al actualizar el perfil de usuario:', error);
