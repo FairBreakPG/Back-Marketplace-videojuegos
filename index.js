@@ -67,6 +67,7 @@ app.get('/listarusuarios', authenticateToken, async (req, res) => {
   }
 });
 
+/*
 //obtener un usuario
 app.get('/perfilusuario/:id', authenticateToken, async (req, res) => {
   const { id } = req.user; 
@@ -78,7 +79,20 @@ app.get('/perfilusuario/:id', authenticateToken, async (req, res) => {
     res.status(500).json({ message: 'Error en el servidor' });
   }
 });
+*/
+app.get('/perfilusuario', authenticateToken, async (req, res) => {
+  const { userId } = req.user;  //
+  
+  try {
+    const perfil = await obtenerPerfilUsuario(userId);  
+    res.json(perfil);
+  } catch (error) {
+    console.error('Error al obtener perfil de usuario:', error);
+    res.status(500).json({ message: 'Error en el servidor' });
+  }
+});
 
+/*
 //llamar a modificar un usuario 
 app.put('/perfilusuario/:id', authenticateToken, async (req, res) => {
   const { id } = req.params; 
@@ -92,6 +106,20 @@ app.put('/perfilusuario/:id', authenticateToken, async (req, res) => {
     res.status(500).json({ message: 'Error al actualizar el perfil' });
   }
 });
+*/
+app.put('/actualizar-perfil', authenticateToken, async (req, res) => {
+  const { id } = req.user;
+  const { nombre, apellido, email, telefono, direccion } = req.body;
+
+  try {
+    const perfilActualizado = await actualizarPerfilUsuario(id, { nombre, apellido, email, telefono, direccion });
+    res.json(perfilActualizado);
+  } catch (error) {
+    console.error('Error al actualizar el perfil de usuario:', error);
+    res.status(500).json({ message: 'Error al actualizar el perfil' });
+  }
+});
+
 
 /*
 app.get('/obtenercarroporusuario/:userId', authenticateToken, async (req, res) => {
@@ -177,7 +205,7 @@ app.post('/productos', authenticateToken, async (req, res) => {
   }
 });
 
-
+/*
 app.get('/usuario/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   try {
@@ -191,14 +219,30 @@ app.get('/usuario/:id', authenticateToken, async (req, res) => {
     res.status(500).json({ message: 'Error en el servidor' });
   }
 });
-
-
-app.delete('/eliminarProductoCarrito', async (req, res) => {
-  const { userId, productoId } = req.body;
+*/
+app.get('/usuario', authenticateToken, async (req, res) => {
+  const { userId } = req.user;  
   
-  console.log("User ID y Producto ID recibido:", userId, productoId); 
-  if (!userId || !productoId) {
-    return res.status(400).json({ error: 'Se requieren userId y productoId en el cuerpo de la solicitud' });
+  try {
+    const data = await obtenerPerfilUsuarioConPedidos(userId);  
+    if (!data) {
+      return res.status(404).json({ message: 'Usuario no encontrado o inactivo' });
+    }
+    res.json(data);  
+  } catch (error) {
+    console.error('Error al obtener datos del usuario:', error);
+    res.status(500).json({ message: 'Error en el servidor' });
+  }
+});
+
+
+
+app.delete('/eliminarProductoCarrito', authenticateToken, async (req, res) => {
+  const { productoId } = req.body;
+  const userId = req.user.id;
+
+  if (!productoId) {
+    return res.status(400).json({ error: 'Se requiere productoId en el cuerpo de la solicitud' });
   }
 
   try {
@@ -215,6 +259,7 @@ app.delete('/eliminarProductoCarrito', async (req, res) => {
     return res.status(500).json({ error: 'Error al eliminar el producto del carrito' });
   }
 });
+
 
 /*
 app.post('/pedidos', async (req, res) => {
@@ -257,7 +302,7 @@ app.post('/pedidos', authenticateToken, async (req, res) => {
 
 
 
-
+/*
 //listar usuario cliente
 app.get('/pedidos/usuario/:usuarioId', async (req, res) => {
   const usuarioId = req.params.usuarioId; 
@@ -270,6 +315,19 @@ app.get('/pedidos/usuario/:usuarioId', async (req, res) => {
     res.status(500).send('Error al obtener los pedidos');
   }
 });
+*/
+app.get('/pedidos/usuario', authenticateToken, async (req, res) => {
+  const usuarioId = req.user.id;  
+
+  try {
+    const pedidos = await getPedidosPorUsuario(usuarioId);  
+    res.json(pedidos);
+  } catch (err) {
+    console.error('Error al obtener los pedidos:', err);
+    res.status(500).send('Error al obtener los pedidos');
+  }
+});
+
 
 //listarpedidos admin
 app.get('/pedidosgenerales', async (req, res) => {
