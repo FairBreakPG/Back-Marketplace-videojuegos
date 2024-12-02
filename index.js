@@ -81,7 +81,7 @@ app.get('/perfilusuario/:id', authenticateToken, async (req, res) => {
 });
 */
 app.get('/perfilusuario', authenticateToken, async (req, res) => {
-  const { userId } = req.user.id; 
+  const { userId } = req.user; 
   
   try {
     const perfil = await obtenerPerfilUsuario(userId);  
@@ -108,7 +108,7 @@ app.put('/perfilusuario/:id', authenticateToken, async (req, res) => {
 });
 */
 app.put('/actualizar-perfil', authenticateToken, async (req, res) => {
-  const { id } = req.user.id;
+  const { id } = req.user;
   const { nombre, apellido, email, telefono, direccion } = req.body;
 
   try {
