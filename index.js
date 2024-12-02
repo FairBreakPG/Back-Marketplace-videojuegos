@@ -115,7 +115,7 @@ app.get('/obtenercarro', authenticateToken, async (req, res) => {
   }
 });
 
-
+/*
 app.post('/carro', authenticateToken, async (req, res) => {
   const { productoId, cantidad } = req.body;
   const userId = req.user.id;
@@ -128,6 +128,20 @@ app.post('/carro', authenticateToken, async (req, res) => {
     res.status(500).json({ message: 'Error al agregar producto al carrito' });
   }
 });
+*/
+app.post('/carro', authenticateToken, async (req, res) => {
+  const { productoId, cantidad } = req.body;
+  const userId = req.user.id;
+  logger.info(`Usuario ${userId} está agregando el producto ${productoId} con cantidad ${cantidad} al carrito.`);
+  try {
+    const carro = await agregarProductoCarro(userId, productoId, cantidad);
+    res.json(carro);
+  } catch (error) {
+    logger.error(`Error al agregar producto al carrito para el usuario ${userId}: ${error.message}`);
+    res.status(500).json({ message: 'Error al agregar producto al carrito' });
+  }
+});
+
 
 app.get('/historial-pedidos', async (req, res) => {
   const { userId } = req.user; 
@@ -202,7 +216,7 @@ app.delete('/eliminarProductoCarrito', async (req, res) => {
   }
 });
 
-
+/*
 app.post('/pedidos', async (req, res) => {
   const { usuario_id, total, metodo_pago, detalles_pedido } = req.body;
   try {
@@ -219,6 +233,28 @@ app.post('/pedidos', async (req, res) => {
     res.status(500).json({ error: 'Hubo un problema al guardar el pedido' });
   }
 });
+*/
+app.post('/pedidos', authenticateToken, async (req, res) => {
+  const { total, metodo_pago, detalles_pedido } = req.body;
+  const userId = req.user.id;
+
+  try {
+    if (!total || !metodo_pago || !detalles_pedido || detalles_pedido.length === 0) {
+      return res.status(400).json({ error: 'Faltan datos requeridos' });
+    }
+
+    const nuevoPedido = await guardarPedido(userId, total, metodo_pago, detalles_pedido);
+    if (!nuevoPedido) {
+      return res.status(500).json({ error: 'Hubo un problema al guardar el pedido' });
+    }
+
+    res.status(201).json(nuevoPedido); 
+  } catch (error) {
+    console.error('Error al guardar el pedido:', error);
+    res.status(500).json({ error: 'Hubo un problema al guardar el pedido' });
+  }
+});
+
 
 
 
