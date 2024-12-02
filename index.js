@@ -93,7 +93,7 @@ app.put('/perfilusuario/:id', authenticateToken, async (req, res) => {
   }
 });
 
-
+/*
 app.get('/obtenercarroporusuario/:userId', authenticateToken, async (req, res) => {
   const userId = req.user.id; 
   try {
@@ -103,6 +103,18 @@ app.get('/obtenercarroporusuario/:userId', authenticateToken, async (req, res) =
     res.status(500).json({ message: 'Error al obtener el carrito' });
   }
 });
+*/
+
+app.get('/obtenercarro', authenticateToken, async (req, res) => {
+  const userId = req.user.id; 
+  try {
+    const carrito = await obtenerCarro(userId);  
+    res.json(carrito);  
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener el carrito' });
+  }
+});
+
 
 app.post('/carro', authenticateToken, async (req, res) => {
   const { productoId, cantidad } = req.body;
