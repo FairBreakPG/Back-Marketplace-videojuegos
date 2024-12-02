@@ -237,12 +237,12 @@ app.get('/usuario', authenticateToken, async (req, res) => {
 
 
 
-app.delete('/eliminarProductoCarrito', authenticateToken, async (req, res) => {
-  const { productoId } = req.body;
+app.delete('/eliminarProductoCarrito/:productoId', authenticateToken, async (req, res) => {
+  const { productoId } = req.params; 
   const userId = req.user.id;
 
   if (!productoId) {
-    return res.status(400).json({ error: 'Se requiere productoId en el cuerpo de la solicitud' });
+    return res.status(400).json({ error: 'Se requiere productoId en la solicitud' });
   }
 
   try {
@@ -252,13 +252,14 @@ app.delete('/eliminarProductoCarrito', authenticateToken, async (req, res) => {
     }
     return res.status(200).json({
       message: 'Producto eliminado del carrito del usuario',
-      carrito: productosEliminados, 
+      carrito: productosEliminados,
     });
   } catch (err) {
     console.error('Error al eliminar el producto del carrito:', err);
     return res.status(500).json({ error: 'Error al eliminar el producto del carrito' });
   }
 });
+
 
 
 /*
